@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#ff5a4f">
+<title>🔥 Diet</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:linear-gradient(160deg,#ff4d43,#ffd0bd);color:#7e1717}
+.app{max-width:900px;margin:auto;padding:18px}
+header{background:#ff6a5d;border:2px solid #ffb09b;border-radius:28px;padding:22px;color:white;box-shadow:0 8px 24px #9d251b33}
+h1{margin:0;font-size:38px}.sub{opacity:.9;margin-top:3px}
+.stats{display:flex;gap:10px;margin-top:18px}.stat{flex:1;background:#ffd8ca;color:#8c201b;border-radius:18px;padding:12px;text-align:center}.num{font-size:25px;font-weight:800;display:block}
+.calendar{margin-top:18px;background:#ffd8ca;border-radius:28px;padding:18px;border:2px solid #ffb09b}
+.nav{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:15px}.nav h2{margin:0;font-size:26px}
+button{border:0;border-radius:14px;padding:11px 16px;font-weight:800;font-size:15px;background:#ff8a22;color:white}
+.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:7px}.dow{text-align:center;font-weight:800;font-size:12px;padding:5px}
+.day{min-height:105px;background:#ff715f;border:2px solid #ffb09b;border-radius:16px;padding:8px;color:white;cursor:pointer}.day.muted{opacity:.35}.day.today{outline:3px solid #ff9b1a}.dayhead{display:flex;justify-content:space-between;align-items:center}.daynum{font-size:18px;font-weight:900}.mini{font-size:12px;margin-top:8px}.mini span{display:block;margin:3px 0}.check{font-size:16px;font-weight:900}
+.editor{margin-top:18px;background:#ffd8ca;border-radius:28px;padding:18px;border:2px solid #ffb09b}.editor h2{margin:0 0 12px}.meal{background:#ff715f;border-radius:18px;padding:12px;margin:10px 0;color:white}.row{display:flex;align-items:center;gap:10px}.meal strong{flex:1}.meal input{width:100%;margin-top:8px;border:2px solid #ffb09b;border-radius:12px;padding:10px;font-size:15px;background:#fff3ee}.tick{width:48px;height:42px;padding:0;background:#ffd08b;color:#8c201b;border:2px solid #ff9b1a;font-size:20px}.tick.on{background:#ff9b1a;color:white}
+.note{width:100%;min-height:80px;border:2px solid #ffb09b;border-radius:14px;padding:12px;background:#fff3ee;font-size:15px}
+.save{width:100%;margin-top:10px;background:#ff8a22}.hint{text-align:center;font-size:12px;margin:12px 0 0;opacity:.75}
+@media(max-width:600px){.app{padding:10px}.grid{gap:5px}.day{min-height:92px;padding:6px}.calendar{padding:10px}h1{font-size:32px}.nav h2{font-size:21px}.stats{gap:6px}.stat{padding:9px 4px}.num{font-size:21px}}
+</style>
+</head>
+<body>
+<div class="app">
+<header><h1>🔥 Diet</h1><div class="sub">Healthy Today • Stronger Tomorrow</div></header>
+<div class="stats">
+ <div class="stat"><span class="num" id="current">0 🔥</span>Current streak</div>
+ <div class="stat"><span class="num" id="best">0 🔥</span>Best streak</div>
+ <div class="stat"><span class="num" id="done">0</span>Days completed</div>
+</div>
+<section class="calendar">
+ <div class="nav"><button id="prev">‹</button><h2 id="month"></h2><button id="next">›</button></div>
+ <div class="grid" id="cal"></div>
+</section>
+<section class="editor">
+ <h2 id="selectedTitle">Today</h2>
+ <div class="meal"><div class="row"><strong>🌅 Morning</strong><button class="tick" data-slot="morning">○</button></div><input data-text="morning" placeholder="Milk / Curd + Fruit"></div>
+ <div class="meal"><div class="row"><strong>☀️ Afternoon</strong><button class="tick" data-slot="afternoon">○</button></div><input data-text="afternoon" placeholder="Light things"></div>
+ <div class="meal"><div class="row"><strong>🌙 Night</strong><button class="tick" data-slot="night">○</button></div><input data-text="night" placeholder="Proper meal"></div>
+ <textarea class="note" id="note" placeholder="Extra note: e.g. Morning X – Kaman"></textarea>
+ <button class="save" id="save">Save today's meals</button>
+ <div class="hint">Your entries stay saved in this browser on this device.</div>
+</section>
+</div>
+<script>
+const KEY="diet_tracker_v2";
+let data=JSON.parse(localStorage.getItem(KEY)||"{}");
+let view=new Date(); view.setDate(1);
+let selected=new Date();
+function key(d){return d.toISOString().slice(0,10)}
+function get(d){return data[key(d)]||{morning:null,afternoon:null,night:null,note:""}}
+function save(){localStorage.setItem(KEY,JSON.stringify(data))}
+function completed(d){let x=get(d);return x.morning===true&&x.afternoon===true&&x.night===true}
+function render(){
+ document.getElementById("month").textContent=view.toLocaleString("en-IN",{month:"long",year:"numeric"});
+ const cal=document.getElementById("cal");cal.innerHTML="";
+ ["SUN","MON","TUE","WED","THU","FRI","SAT"].forEach(x=>{let e=document.createElement("div");e.className="dow";e.textContent=x;cal.appendChild(e)});
+ let first=new Date(view.getFullYear(),view.getMonth(),1), start=first.getDay(), days=new Date(view.getFullYear(),view.getMonth()+1,0).getDate();
+ for(let i=0;i<start;i++){let e=document.createElement("div");e.className="day muted";cal.appendChild(e)}
+ for(let n=1;n<=days;n++){
+   let d=new Date(view.getFullYear(),view.getMonth(),n), x=get(d), e=document.createElement("div");
+   e.className="day"+(key(d)===key(new Date())?" today":"");
+   e.innerHTML=`<div class="dayhead"><span class="daynum">${n}</span><span class="check">${completed(d)?"✓":"○"}</span></div>
+   <div class="mini"><span>🌅 ${x.morning===true?"✓":x.morning===false?"✕":"○"}</span><span>☀️ ${x.afternoon===true?"✓":x.afternoon===false?"✕":"○"}</span><span>🌙 ${x.night===true?"✓":x.night===false?"✕":"○"}</span></div>`;
+   e.onclick=()=>{selected=d;loadEditor()};cal.appendChild(e);
+ }
+ stats();
+}
+function stats(){
+ let dates=Object.keys(data).filter(k=>completed(new Date(k))).sort();
+ document.getElementById("done").textContent=dates.length;
+ let best=0,cur=0, today=new Date();
+ for(let i=0;i<dates.length;i++){let a=new Date(dates[i]);let j=i+1,c=1;while(j<dates.length&&(new Date(dates[j])-a)===86400000){c++;a=new Date(dates[j]);j++}best=Math.max(best,c)}
+ let d=new Date(today);while(completed(d)){cur++;d.setDate(d.getDate()-1)}
+ document.getElementById("current").textContent=cur+" 🔥";
+ document.getElementById("best").textContent=best+" 🔥";
+}
+function loadEditor(){
+ let x=get(selected);document.getElementById("selectedTitle").textContent=selected.toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long"});
+ ["morning","afternoon","night"].forEach(s=>{let b=document.querySelector(`[data-slot="${s}"]`);b.textContent=x[s]===true?"✓":x[s]===false?"✕":"○";b.classList.toggle("on",x[s]===true);document.querySelector(`[data-text="${s}"]`).value=typeof x[s+"_text"]==="string"?x[s+"_text"]:""});
+ document.getElementById("note").value=x.note||"";
+}
+document.querySelectorAll(".tick").forEach(b=>b.onclick=()=>{let s=b.dataset.slot,x=get(selected);x[s]=x[s]===true?false:true;data[key(selected)]=x;save();loadEditor();render()});
+document.getElementById("save").onclick=()=>{let x=get(selected);["morning","afternoon","night"].forEach(s=>x[s+"_text"]=document.querySelector(`[data-text="${s}"]`).value);x.note=document.getElementById("note").value;data[key(selected)]=x;save();render();alert("Saved ✓")};
+document.getElementById("prev").onclick=()=>{view.setMonth(view.getMonth()-1);render()};
+document.getElementById("next").onclick=()=>{view.setMonth(view.getMonth()+1);render()};
+render();loadEditor();
+</script>
+</body>
+</html>
